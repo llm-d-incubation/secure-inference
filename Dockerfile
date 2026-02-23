@@ -12,7 +12,7 @@ RUN go mod download
 
 # Copy source and build
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /workspace/app .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /workspace/app ./cmd
 
 # --- Runtime stage ---
 FROM gcr.io/distroless/static:nonroot
