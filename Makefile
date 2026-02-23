@@ -1,5 +1,5 @@
 # Project configuration
-PROJECT_NAME ?= {{secure-inference}}
+PROJECT_NAME ?= secure-inference
 REGISTRY ?= ghcr.io/llm-d
 IMAGE ?= $(REGISTRY)/$(PROJECT_NAME)
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -24,7 +24,7 @@ help: ## Show this help message
 
 .PHONY: build
 build: ## Build the Go binary
-	go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(PROJECT_NAME) .
+	go build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o bin/$(PROJECT_NAME) ./cmd
 
 .PHONY: test
 test: ## Run tests with race detection
