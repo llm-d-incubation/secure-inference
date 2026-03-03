@@ -1,0 +1,20 @@
+apiVersion: v2
+name: secure-inference
+description: Secure Inference - JWT authentication and ABAC policy enforcement for LLM inference
+
+type: application
+
+version: 0.3.0
+
+appVersion: "0.3.0"
+
+keywords:
+  - llm
+  - access-control
+  - abac
+  - jwt
+  - envoy
+  - istio
+
+maintainers:
+  - name: LLM-D Access Control Team

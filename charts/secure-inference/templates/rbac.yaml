@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: secure-inference-role
+rules:
+  - apiGroups: ["accesscontrol.llm-d.io"]
+    resources: ["users", "models"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["accesscontrol.llm-d.io"]
+    resources: ["users/status", "models/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["accesscontrol.llm-d.io"]
+    resources: ["users/finalizers", "models/finalizers"]
+    verbs: ["update"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: secure-inference-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: secure-inference-role
+subjects:
+  - kind: ServiceAccount
+    name: secure-inference-sa
+    namespace: {{ .Release.Namespace }}
