@@ -1,0 +1,4 @@
+# Markdownlint configuration
+MD013: false
+MD040: false
+MD060: false

@@ -1,0 +1,65 @@
+apiVersion: accesscontrol.llm-d.io/v1alpha1
+kind: Model
+metadata:
+  name: llama-1b-base
+spec:
+  id: "meta-llama/Llama-3.2-1B-Instruct"
+  type: BaseModel
+  accessPolicy:
+    userAttributes:
+      role:
+        - secret_role
+        - public_role
+        - systems_role
+        - database_expert
+---
+apiVersion: accesscontrol.llm-d.io/v1alpha1
+kind: Model
+metadata:
+  name: ibm-z17-technical
+spec:
+  id: ibm_z17_technical_technical_introduction
+  type: LoRA
+  baseModelId: "meta-llama/Llama-3.2-1B-Instruct"
+  accessPolicy:
+    userAttributes:
+      role:
+        - systems_role
+  selectionPolicy:
+    descriptions:
+      - IBM z17 mainframe processor architecture and hardware specifications
+      - IBM z Systems z17 technical introduction and system design
+---
+apiVersion: accesscontrol.llm-d.io/v1alpha1
+kind: Model
+metadata:
+  name: ibm-power-env
+spec:
+  id: ansible_automation_ibm_power_env
+  type: LoRA
+  baseModelId: "meta-llama/Llama-3.2-1B-Instruct"
+  accessPolicy:
+    userAttributes:
+      role:
+        - systems_role
+  selectionPolicy:
+    descriptions:
+      - Ansible automation for IBM Power Systems environment configuration
+      - IBM Power system administration and deployment with Ansible playbooks
+---
+apiVersion: accesscontrol.llm-d.io/v1alpha1
+kind: Model
+metadata:
+  name: ibm-storage-flash
+spec:
+  id: best_practices_ibm_storage_flash_system
+  type: LoRA
+  baseModelId: "meta-llama/Llama-3.2-1B-Instruct"
+  accessPolicy:
+    userAttributes:
+      role:
+        - database_expert
+  selectionPolicy:
+    descriptions:
+      - IBM FlashSystem storage management and database best practices
+      - IBM Flash storage system administration and performance tuning

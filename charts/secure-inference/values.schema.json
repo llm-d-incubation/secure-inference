@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "secure-inference Helm values",
+  "type": "object",
+  "required": ["gateway", "gateway_name", "image", "config"],
+  "properties": {
+    "gateway": {
+      "type": "string",
+      "enum": ["istio", "kgateway"],
+      "description": "Gateway provider"
+    },
+    "gateway_name": {
+      "type": "string",
+      "description": "Gateway resource name (used by istio EnvoyFilter workloadSelector)"
+    },
+    "target_http_route": {
+      "type": "string",
+      "description": "HTTPRoute name (used by kgateway TrafficPolicy)"
+    },
+    "image": {
+      "type": "string",
+      "description": "Main container image"
+    },
+    "imagePullPolicy": {
+      "type": "string",
+      "enum": ["Always", "IfNotPresent", "Never"],
+      "default": "IfNotPresent"
+    },
+    "replicas": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "authPort": {
+      "type": "integer",
+      "default": 9000
+    },
+    "metricsPort": {
+      "type": "integer",
+      "default": 8080
+    },
+    "healthPort": {
+      "type": "integer",
+      "default": 8081
+    },
+    "leaderElection": {
+      "type": "boolean",
+      "default": false
+    },
+    "sidecars": {
+      "type": "object",
+      "description": "Sidecar containers to deploy alongside the main container",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["enabled", "image", "port", "healthPath"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "image": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "healthPath": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "config": {
+      "type": "object",
+      "description": "Application config — mirrors Go SecureInferenceConfig",
+      "required": ["dataStore", "policyEngine", "auth", "adapterSelection"],
+      "properties": {
+        "dataStore": {
+          "$ref": "#/$defs/componentConfig",
+          "description": "Data store backend",
+          "properties": {
+            "type": {
+              "enum": ["memory", ""]
+            }
+          }
+        },
+        "policyEngine": {
+          "$ref": "#/$defs/componentConfig",
+          "description": "Policy engine backend",
+          "properties": {
+            "type": {
+              "enum": ["opa", ""]
+            }
+          }
+        },
+        "auth": {
+          "$ref": "#/$defs/componentConfig",
+          "description": "Authentication backend",
+          "properties": {
+            "type": {
+              "enum": ["jwt", ""]
+            }
+          }
+        },
+        "adapterSelection": {
+          "type": "object",
+          "description": "Adapter selection config",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["semantic", ""],
+              "description": "\"\" = disabled, \"semantic\" = enabled"
+            },
+            "alwaysActive": {
+              "type": "boolean",
+              "default": false,
+              "description": "true = always run, false = only with x-adapter-selection header"
+            },
+            "parameters": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "componentConfig": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

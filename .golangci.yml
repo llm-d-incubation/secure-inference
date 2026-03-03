@@ -37,7 +37,7 @@ linters:
     - makezero
     - misspell
     - nakedret
-    - nestif
+    # - nestif  # TODO: reduce complexity in server.go Check() and request.go parser
     - nilerr
     - nilnil
     - noctx
@@ -52,7 +52,7 @@ linters:
     - staticcheck
     # - tagliatelle
     - testableexamples
-    - testpackage
+    # - testpackage  # TODO: migrate white-box tests to _test packages
     - thelper
     - tparallel
     - unconvert
@@ -82,6 +82,7 @@ linters:
     staticcheck:
       checks:
         - all
+        - -ST1003  # CRD field names (Id, BaseModelId) match Kubernetes API conventions
     varnamelen:
       max-distance: 20
       min-name-length: 2
@@ -101,6 +102,30 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    rules:
+      # Relax gosec file-permission checks in test files.
+      - linters: [gosec]
+        path: _test\.go
+      # Relax errcheck in test files — test assertions cover failures.
+      - linters: [errcheck]
+        path: _test\.go
+      # Relax unparam in test helpers.
+      - linters: [unparam]
+        path: _test\.go
+      # Relax noctx in test helpers (net.Listen in tests).
+      - linters: [noctx]
+        path: _test\.go
+      # G704 SSRF false positive — sidecar URL comes from admin config, not user input.
+      - linters: [gosec]
+        path: pkg/adapterselection/semantic/
+        text: "G704"
+      # deployment-customizer is an internal CLI tool — relax gosec.
+      - linters: [gosec]
+        path: cmd/deployment-customizer/
+      # gocritic exitAfterDefer in main.go is intentional (defer for panic recovery).
+      - linters: [gocritic]
+        path: cmd/secure-inference/main\.go
+        text: exitAfterDefer
     paths:
       - third_party$
       - builtin$

@@ -1,0 +1,90 @@
+{{- if eq .Values.gateway "kgateway" }}
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayExtension
+metadata:
+  name: llmd-auth-gateway-extension
+  labels:
+    app: secure-inference
+spec:
+  type: ExtAuth
+  extAuth:
+    grpcService:
+      backendRef:
+        name: llmd-auth-service
+        port: 4444
+---
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: TrafficPolicy
+metadata:
+  name: llmd-auth-traffic-policy
+  labels:
+    app: secure-inference
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ .Values.target_http_route }}
+  extAuth:
+    extensionRef:
+      name: llmd-auth-gateway-extension
+    withRequestBody:
+      maxRequestBytes: 1048576
+      allowPartialMessage: false
+      packAsBytes: false
+{{- end }}
+{{- if eq .Values.gateway "istio" }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: llmd-ext-auth-filter
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      gateway.networking.k8s.io/gateway-name: {{ .Values.gateway_name }}
+  configPatches:
+  - applyTo: CLUSTER
+    patch:
+      operation: ADD
+      value:
+        name: ext_auth_cluster
+        type: STRICT_DNS
+        connect_timeout: 1s
+        typed_extension_protocol_options:
+          envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+            "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+            explicit_http_config:
+              http2_protocol_options: {}
+        load_assignment:
+          cluster_name: ext_auth_cluster
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: llmd-auth-service.{{ .Release.Namespace }}.svc.cluster.local
+                    port_value: 4444
+  - applyTo: HTTP_FILTER
+    match:
+      context: GATEWAY
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.ext_proc"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.access.control.auth
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+          grpc_service:
+            envoy_grpc:
+              cluster_name: ext_auth_cluster
+            timeout: "10s"
+          with_request_body:
+            max_request_bytes: 1048576
+            allow_partial_message: false
+            pack_as_bytes: false
+{{- end }}

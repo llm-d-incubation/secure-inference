@@ -1,0 +1,8 @@
+apiVersion: accesscontrol.llm-d.io/v1alpha1
+kind: User
+metadata:
+  name: bob
+spec:
+  id: bob
+  attributes:
+    role: database_expert

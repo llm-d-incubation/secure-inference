@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-inference
+  labels:
+    app: secure-inference
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: secure-inference
+  template:
+    metadata:
+      labels:
+        app: secure-inference
+        app.kubernetes.io/name: secure-inference
+    spec:
+      serviceAccountName: secure-inference-sa
+      containers:
+        - name: secure-inference
+          image: {{ .Values.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args:
+            - --config=/etc/secure-inference/config.yaml
+            - --auth-port={{ .Values.authPort }}
+            - --health-probe-bind-address=:{{ .Values.healthPort }}
+            - --metrics-bind-address=:{{ .Values.metricsPort }}
+            - --leader-elect={{ .Values.leaderElection }}
+          ports:
+            - containerPort: {{ .Values.authPort }}
+              name: grpc-auth
+              protocol: TCP
+            - containerPort: {{ .Values.healthPort }}
+              name: health
+              protocol: TCP
+            - containerPort: {{ .Values.metricsPort }}
+              name: metrics
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.healthPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.healthPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: llmd-access-key
+              mountPath: "/etc/ssl/certs"
+              readOnly: true
+            - name: config
+              mountPath: "/etc/secure-inference"
+              readOnly: true
+      {{- range $name, $sidecar := .Values.sidecars }}
+      {{- if $sidecar.enabled }}
+        - name: {{ $name | kebabcase }}
+          image: {{ $sidecar.image }}
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ $sidecar.port }}
+              name: http-{{ $name | kebabcase | trunc 10 }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ $sidecar.healthPath }}
+              port: {{ $sidecar.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: {{ $sidecar.healthPath }}
+              port: {{ $sidecar.port }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      {{- end }}
+      {{- end }}
+      volumes:
+        - name: llmd-access-key
+          secret:
+            secretName: llm-d-access
+            items:
+              - key: publickey
+                path: llm-d-ca.pem
+        - name: config
+          configMap:
+            name: secure-inference-config
