@@ -8,9 +8,7 @@ from fastembed import TextEmbedding
 
 
 def _model_name() -> str:
-    return os.environ.get(
-        "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
-    )
+    return os.environ.get("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
 
 @lru_cache(maxsize=1)
