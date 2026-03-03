@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secure-inference-config
+  labels:
+    app: secure-inference
+data:
+  config.yaml: |
+    apiVersion: secure-inference.llm-d.io/v1alpha1
+    kind: SecureInferenceConfig
+    dataStore:
+{{ include "secure-inference.componentConfig" .Values.config.dataStore | indent 6 }}
+    policyEngine:
+{{ include "secure-inference.componentConfig" .Values.config.policyEngine | indent 6 }}
+    auth:
+{{ include "secure-inference.componentConfig" .Values.config.auth | indent 6 }}
+    adapterSelection:
+{{ include "secure-inference.componentConfig" .Values.config.adapterSelection | indent 6 }}
+      alwaysActive: {{ .Values.config.adapterSelection.alwaysActive | default false }}

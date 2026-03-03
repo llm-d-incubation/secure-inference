@@ -1,25 +1,25 @@
-# Multi-stage build for secure-inference
-# Supports multi-arch: linux/amd64, linux/arm64
-
-# --- Build stage ---
-FROM golang:1.26 AS builder
+# Build stage
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /workspace
 
-# Cache dependencies
+# Copy go mod files first for layer caching
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source and build
+# Copy source code
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /workspace/app ./cmd
 
-# --- Runtime stage ---
+# Build the unified binary
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /workspace/secure-inference ./cmd/secure-inference
+
+# Runtime stage
 FROM gcr.io/distroless/static:nonroot
 
 WORKDIR /
-COPY --from=builder /workspace/app .
+
+COPY --from=builder /workspace/secure-inference .
 
 USER 65532:65532
 
-ENTRYPOINT ["/app"]
+ENTRYPOINT ["/secure-inference"]

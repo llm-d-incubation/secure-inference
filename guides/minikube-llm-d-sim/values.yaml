@@ -1,0 +1,43 @@
+# Helm values for minikube-llm-d-sim guide
+
+# Gateway configuration
+gateway: istio
+gateway_name: infra-sim-inference-gateway
+target_http_route: llm-d-sim
+
+# Deployment settings
+image: secure-inference:latest
+imagePullPolicy: IfNotPresent
+
+# Server flags (passed as container args)
+authPort: 9000
+metricsPort: 8080
+healthPort: 8081
+leaderElection: false
+
+# Sidecar containers
+sidecars:
+  adapterSelectionFastembed:
+    enabled: true
+    image: adapter-selection-fastembed:latest
+    port: 8000
+    healthPath: /health
+
+# Application config
+config:
+  dataStore:
+    type: memory
+    parameters: {}
+  policyEngine:
+    type: opa
+    parameters: {}
+  auth:
+    type: jwt
+    parameters:
+      publicKeyPath: /etc/ssl/certs/llm-d-ca.pem
+  adapterSelection:
+    type: semantic
+    alwaysActive: false
+    parameters:
+      url: "http://localhost:8000"
+      similarityThreshold: "0.6"

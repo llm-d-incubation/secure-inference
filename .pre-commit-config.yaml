@@ -13,6 +13,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--unsafe]  # allows custom YAML tags used in k8s
+        exclude: ^(charts/|config/crd/)
       - id: check-json
       - id: check-added-large-files
         args: [--maxkb=1000]
@@ -48,11 +49,20 @@ repos:
       - id: markdownlint
         args: [--fix]
 
+  # Python linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
   # YAML linting
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
     hooks:
       - id: yamllint
+        exclude: ^(charts/|config/crd/)
         args:
           - -d
           - >-

@@ -1,0 +1,43 @@
+# Gateway configuration
+gateway: istio          # "kgateway" or "istio"
+gateway_name: llm-d-inference-gateway   # istio gateway name (if gateway is istio)
+target_http_route: meta-llama-llama-3-2-1b-instruct  # kgateway HTTPRoute (if gateway is kgateway)
+
+# Deployment settings
+image: secure-inference:latest
+imagePullPolicy: IfNotPresent
+replicas: 1
+
+# Server flags (passed as container args)
+authPort: 9000
+metricsPort: 8080
+healthPort: 8081
+leaderElection: false
+
+# Sidecar containers
+sidecars:
+  adapterSelectionFastembed:
+    enabled: false
+    image: adapter-selection-fastembed:latest
+    port: 8000
+    healthPath: /health
+
+# Application config — mirrors Go SecureInferenceConfig
+# Rendered into configmap via helper template (only type + parameters)
+config:
+  dataStore:
+    type: memory
+    parameters: {}
+  policyEngine:
+    type: opa
+    parameters: {}
+  auth:
+    type: jwt
+    parameters:
+      publicKeyPath: /etc/ssl/certs/llm-d-ca.pem
+  adapterSelection:
+    type: ""          # "" = disabled, "semantic" = enabled
+    alwaysActive: false  # true = always run, false = only with x-adapter-selection: true header
+    parameters:
+      url: "http://localhost:8000"
+      similarityThreshold: "0.7"
