@@ -1,0 +1,4 @@
+# Cloned at runtime by setup.sh
+llm-d/
+# Downloaded at runtime
+istio-*/

@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: decode
+  labels:
+    llm-d.ai/role: decode
+    llm-d.ai/guide: minikube-llm-d-cpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      llm-d.ai/role: decode
+      llm-d.ai/guide: minikube-llm-d-cpu
+  template:
+    metadata:
+      labels:
+        llm-d.ai/role: decode
+        llm-d.ai/guide: minikube-llm-d-cpu
+    spec:
+      initContainers:
+        - name: download-model
+          image: ghcr.io/abetlen/llama-cpp-python:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              pip install -q huggingface-hub && \
+              python3 -c "
+              from huggingface_hub import hf_hub_download
+              hf_hub_download(
+                  repo_id='hugging-quants/Llama-3.2-1B-Instruct-Q4_K_M-GGUF',
+                  filename='llama-3.2-1b-instruct-q4_k_m.gguf',
+                  local_dir='/models'
+              )
+              print('Model downloaded successfully')
+              "
+          env:
+            - name: HF_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: hf-token
+                  key: token
+                  optional: true
+          volumeMounts:
+            - mountPath: /models
+              name: model-storage
+      containers:
+        - name: modelserver
+          image: ghcr.io/abetlen/llama-cpp-python:latest
+          env:
+            - name: MODEL
+              value: /models/llama-3.2-1b-instruct-q4_k_m.gguf
+            - name: MODEL_ALIAS
+              value: "meta-llama/Llama-3.2-1B-Instruct"
+            - name: N_CTX
+              value: "2048"
+            - name: CHAT_FORMAT
+              value: "llama-3"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "8000"
+          ports:
+            - name: modelserver
+              containerPort: 8000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "2"
+              memory: 3Gi
+            limits:
+              cpu: "4"
+              memory: 4Gi
+          startupProbe:
+            httpGet:
+              path: /v1/models
+              port: modelserver
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /v1/models
+              port: modelserver
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v1/models
+              port: modelserver
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          volumeMounts:
+            - mountPath: /models
+              name: model-storage
+      volumes:
+        - name: model-storage
+          emptyDir:
+            sizeLimit: 4Gi

@@ -1,0 +1,34 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: llm-d-cpu-inference-gateway
+  labels:
+    istio.io/enable-inference-extproc: "true"
+spec:
+  gatewayClassName: istio
+  infrastructure:
+    parametersRef:
+      name: llm-d-cpu-inference-gateway
+      group: ""
+      kind: ConfigMap
+  listeners:
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: "llm-d.com"
+      allowedRoutes:
+        namespaces:
+          from: Same
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: llm-d-gateway-https-cert-secret
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-d-cpu-inference-gateway
+data:
+  service: |
+    spec:
+      type: ClusterIP
