@@ -6,6 +6,7 @@ LLM_D_DIR="${SCRIPT_DIR}/llm-d"
 VLLM_DIR="${SCRIPT_DIR}/vllm"
 
 # --- Configuration ---
+MINIKUBE_PROFILE="${MINIKUBE_PROFILE:-minikube}"
 NAMESPACE="llm-d-cpu"
 GUIDE_NAME="minikube-llm-d-cpu"
 
@@ -69,8 +70,8 @@ fi
 
 # Delete minikube cluster
 if command -v minikube >/dev/null 2>&1; then
-    log "Deleting minikube cluster..."
-    minikube delete
+    log "Deleting minikube cluster (profile: ${MINIKUBE_PROFILE})..."
+    minikube delete -p "${MINIKUBE_PROFILE}"
     success "Minikube cluster deleted"
 else
     warn "minikube command not found, skipping cluster deletion"

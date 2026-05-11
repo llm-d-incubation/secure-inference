@@ -8,6 +8,7 @@ LLM_D_DIR="${SCRIPT_DIR}/llm-d"
 VLLM_DIR="${SCRIPT_DIR}/vllm"
 
 # --- Configuration ---
+MINIKUBE_PROFILE="${MINIKUBE_PROFILE:-minikube}"
 NAMESPACE="llm-d-cpu"
 GUIDE_NAME="minikube-llm-d-cpu"
 LLM_D_REPO="https://github.com/llm-d/llm-d.git"
@@ -101,11 +102,11 @@ log "Installing client tools (kustomize, helmfile, etc.)..."
 "${LLM_D_DIR}/helpers/client-setup/install-deps.sh"
 
 # --- Minikube Setup ---
-log "Starting Minikube..."
-if minikube status | grep -q "Running"; then
+log "Starting Minikube (profile: ${MINIKUBE_PROFILE})..."
+if minikube status -p "${MINIKUBE_PROFILE}" 2>/dev/null | grep -q "Running"; then
     log "Minikube is already running."
 else
-    minikube start --driver docker --container-runtime docker --memory 10g --cpus 6
+    minikube start -p "${MINIKUBE_PROFILE}" --driver docker --memory 10g --cpus 6
 fi
 
 log "Creating namespace ${NAMESPACE}..."
@@ -114,7 +115,7 @@ kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -
 # --- Load vLLM CPU Image into Minikube ---
 if [ "${PLATFORM}" = "arm64" ]; then
     log "Loading locally built vLLM CPU image into minikube..."
-    minikube image load "${VLLM_CPU_IMAGE}"
+    minikube image load "${VLLM_CPU_IMAGE}" -p "${MINIKUBE_PROFILE}"
 fi
 
 # --- Install Gateway API and Inference Extension CRDs ---
@@ -218,7 +219,7 @@ log "Loading images to minikube..."
 ( cd "${PROJECT_ROOT}" && \
     make load-images-minikube \
         SIDECARS=adapter-selection-fastembed=adapter-selection-fastembed:latest \
-        MINIKUBE_PROFILE=minikube )
+        MINIKUBE_PROFILE="${MINIKUBE_PROFILE}" )
 
 log "Deploying secure-inference access control..."
 export K8S_NAMESPACE=${NAMESPACE}
