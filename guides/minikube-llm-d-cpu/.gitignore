@@ -1,4 +1,5 @@
 # Cloned at runtime by setup.sh
 llm-d/
+vllm/
 # Downloaded at runtime
 istio-*/

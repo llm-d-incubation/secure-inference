@@ -5,6 +5,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 LLM_D_DIR="${SCRIPT_DIR}/llm-d"
+VLLM_DIR="${SCRIPT_DIR}/vllm"
 
 # --- Configuration ---
 NAMESPACE="llm-d-cpu"
@@ -13,6 +14,9 @@ LLM_D_REPO="https://github.com/llm-d/llm-d.git"
 LLM_D_COMMIT="83718227b22db83ed8e77d1c20dcade088153f33"
 GAIE_VERSION="v1.5.0"
 ISTIO_VERSION="1.29.0"
+VLLM_CPU_IMAGE_X86="ghcr.io/llm-d/llm-d-cpu:v0.6.0"
+VLLM_CPU_IMAGE_ARM="vllm-cpu:local"
+VLLM_VERSION="v0.20.2"
 
 # --- Architecture Detection ---
 ARCH=$(uname -m)
@@ -49,11 +53,36 @@ command -v helm >/dev/null 2>&1 || { echo >&2 "helm is required but not installe
 command -v kubectl >/dev/null 2>&1 || { echo >&2 "kubectl is required but not installed. Aborting."; exit 1; }
 command -v git >/dev/null 2>&1 || { echo >&2 "git is required but not installed. Aborting."; exit 1; }
 command -v go >/dev/null 2>&1 || { echo >&2 "go is required but not installed. Aborting."; exit 1; }
+command -v docker >/dev/null 2>&1 || { echo >&2 "docker is required but not installed. Aborting."; exit 1; }
 
-# --- Select Model Server Deployment for Architecture ---
-log "Selecting model server deployment for ${PLATFORM}..."
-cp "${SCRIPT_DIR}/kustomize/modelserver/decode-deployment-${PLATFORM}.yaml" \
-   "${SCRIPT_DIR}/kustomize/modelserver/decode-deployment.yaml"
+# --- Prepare vLLM CPU Image ---
+if [ "${PLATFORM}" = "amd64" ]; then
+    VLLM_CPU_IMAGE="${VLLM_CPU_IMAGE_X86}"
+    log "Using pre-built vLLM CPU image: ${VLLM_CPU_IMAGE}"
+else
+    VLLM_CPU_IMAGE="${VLLM_CPU_IMAGE_ARM}"
+    if docker image inspect "${VLLM_CPU_IMAGE}" >/dev/null 2>&1; then
+        log "vLLM CPU image '${VLLM_CPU_IMAGE}' already exists, skipping build."
+    else
+        log "Building vLLM CPU image for ARM64 (this takes 30-60 minutes, only needed once)..."
+
+        if [ ! -d "${VLLM_DIR}" ]; then
+            log "Cloning vLLM ${VLLM_VERSION}..."
+            git clone --depth 1 --branch "${VLLM_VERSION}" https://github.com/vllm-project/vllm.git "${VLLM_DIR}"
+        fi
+
+        log "Building Docker image (platform: arm64, max_jobs=2)..."
+        ( cd "${VLLM_DIR}" && \
+            docker build -f docker/Dockerfile.cpu \
+                --platform=linux/arm64 \
+                --build-arg VLLM_CPU_ARM_BF16=true \
+                --build-arg max_jobs=2 \
+                --tag "${VLLM_CPU_IMAGE}" \
+                --target vllm-openai . )
+
+        success "vLLM CPU image built successfully."
+    fi
+fi
 
 # --- Clone llm-d Repository ---
 log "Setting up workspace in ${LLM_D_DIR}..."
@@ -81,6 +110,12 @@ fi
 
 log "Creating namespace ${NAMESPACE}..."
 kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+
+# --- Load vLLM CPU Image into Minikube ---
+if [ "${PLATFORM}" = "arm64" ]; then
+    log "Loading locally built vLLM CPU image into minikube..."
+    minikube image load "${VLLM_CPU_IMAGE}"
+fi
 
 # --- Install Gateway API and Inference Extension CRDs ---
 log "Installing Gateway API CRDs..."
@@ -134,13 +169,8 @@ helm install ${GUIDE_NAME} \
     -n ${NAMESPACE} --version ${GAIE_VERSION}
 
 # --- Deploy Model Server ---
-if [ "${PLATFORM}" = "arm64" ]; then
-    log "Deploying model server (llama-cpp-python for ARM64)..."
-    log "Note: Model will be downloaded in an init container (~1GB GGUF)."
-else
-    log "Deploying model server (vLLM CPU with LoRA adapters for x86)..."
-    log "Note: Model download and loading will take 3-5 minutes."
-fi
+log "Deploying model server (vLLM CPU with LoRA adapters)..."
+log "Using image: ${VLLM_CPU_IMAGE}"
 
 # Create HF token secret if HF_TOKEN env var is set
 if [ -n "${HF_TOKEN}" ]; then
@@ -152,7 +182,9 @@ else
     warn "HF_TOKEN not set. Set HF_TOKEN if model download fails."
 fi
 
-kubectl apply -n ${NAMESPACE} -k "${SCRIPT_DIR}/kustomize/modelserver"
+kubectl kustomize "${SCRIPT_DIR}/kustomize/modelserver" | \
+    sed "s|image: VLLM_CPU_IMAGE|image: ${VLLM_CPU_IMAGE}|g" | \
+    kubectl apply -n ${NAMESPACE} -f -
 
 # --- Wait for Model Server to be Ready ---
 log "Waiting for model server to be ready (this may take 5-10 minutes)..."

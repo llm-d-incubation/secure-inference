@@ -3,6 +3,7 @@
 # --- Paths ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LLM_D_DIR="${SCRIPT_DIR}/llm-d"
+VLLM_DIR="${SCRIPT_DIR}/vllm"
 
 # --- Configuration ---
 NAMESPACE="llm-d-cpu"
@@ -84,6 +85,13 @@ else
     warn "llm-d directory not found at ${LLM_D_DIR}, skipping"
 fi
 
+# Remove vllm source directory (image is cached in Docker)
+if [ -d "${VLLM_DIR}" ]; then
+    log "Removing ${VLLM_DIR} directory..."
+    rm -rf "${VLLM_DIR}"
+    success "vLLM source removed (Docker image still cached)"
+fi
+
 # Remove istioctl download if present
 for dir in "${SCRIPT_DIR}"/istio-*; do
     if [ -d "$dir" ]; then
@@ -95,3 +103,4 @@ for dir in "${SCRIPT_DIR}"/istio-*; do
 done
 
 success "Cleanup complete!"
+log "Note: The vllm-cpu:local Docker image is preserved. To remove it: docker rmi vllm-cpu:local"
