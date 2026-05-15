@@ -21,7 +21,7 @@ func CreateAdminCerts() {
 		PrivateKeyOutPath: config.LlmDKeyFile,
 	})
 	if err != nil {
-		fmt.Printf("Unable to generate CA certficate :%v\n", err)
+		fmt.Printf("Unable to generate CA certificate :%v\n", err)
 		return
 	}
 }
