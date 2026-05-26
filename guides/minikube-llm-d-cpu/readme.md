@@ -114,7 +114,7 @@ curl -vik --connect-to llm-d.com:443:localhost:8443 https://llm-d.com:443/v1/com
 
 ### Test adapter selection (auto LoRA routing)
 
-Send a request for the base model with a domain-specific prompt and the `x-adapter-selection: true` header. If a matching LoRA the user has access to is found, the response header `x-gateway-model-name-rewrite` will contain the selected LoRA model ID.
+Send a request for the base model with a domain-specific prompt and the `x-adapter-selection: true` header. If a matching LoRA the user has access to is found, EPP rewrites the request body's `model:` field to the selected LoRA before forwarding to vLLM. EPP rewrites the response body's `model:` field back to the originally requested base model name, and no response header carries the LoRA name. See [Verifying adapter selection](#verifying-adapter-selection) below to check which LoRA ran.
 
 ```sh
 # Alice asking about z17 — should auto-route to ibm_z17 LoRA
@@ -143,6 +143,39 @@ curl -vik --connect-to llm-d.com:443:localhost:8443 https://llm-d.com:443/v1/com
     "max_tokens": 100
 }'
 ```
+
+### Verifying adapter selection
+
+The response body cannot tell you which LoRA was used (EPP rewrites it back). Use one of:
+
+#### EPP logs
+
+```sh
+kubectl logs -n llm-d-cpu deployment/minikube-llm-d-cpu-epp --tail=50 \
+  | grep "EPP sent request body response"
+```
+
+Each line contains `modelName` (what the client sent) and `targetModelName` (what EPP routed to). When they differ, a LoRA was selected. Match by `x-request-id`, which equals the response body's `id` field without the `cmpl-` prefix.
+
+#### vLLM `lora_requests_info` metric
+
+A per-LoRA gauge whose value is the unix-timestamp of the most recent request to use that LoRA. Snapshot before and after a request:
+
+```sh
+DECODE_POD=$(kubectl get pod -n llm-d-cpu -l llm-d.ai/role=decode -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n llm-d-cpu $DECODE_POD -c modelserver -- \
+  curl -s localhost:8000/metrics | grep '^vllm:lora_requests_info'
+```
+
+Sample output:
+
+```
+vllm:lora_requests_info{running_lora_adapters="ibm_z17_technical_technical_introduction",...} 1.779731246e+09
+vllm:lora_requests_info{running_lora_adapters="best_practices_ibm_storage_flash_system",...} 1.779698754e+09
+vllm:lora_requests_info{running_lora_adapters="ansible_automation_ibm_power_env",...}        1.779698742e+09
+```
+
+If a LoRA's timestamp advances into the time window of your request, that LoRA ran. Other LoRAs' timestamps stay frozen.
 
 ## Demo Scenario
 
