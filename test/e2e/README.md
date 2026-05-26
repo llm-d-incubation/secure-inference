@@ -62,7 +62,7 @@ go test ./test/e2e -run TestFullSystemDeployment -v
 ### 1. Deploy System
 
 ```bash
-cd guides/minikube-llm-d-sim
+cd guides/minikube-llm-d-cpu
 ./setup.sh
 ```
 
@@ -119,7 +119,7 @@ curl -H "Authorization: Bearer $ALICE_TOKEN" \
      https://gateway/v1/completions
 
 # Check logs to verify z17 LoRA was selected
-kubectl logs -l app=llmd-proc -n llm-d-sim
+kubectl logs -l app=llmd-proc -n llm-d-cpu
 ```
 
 ## Test Coverage
