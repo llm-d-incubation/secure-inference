@@ -8,13 +8,7 @@ This guide deploys llm-d with CPU-based model serving on minikube, featuring:
 4. secure-inference access control (JWT authentication + ABAC authorization)
 5. Adapter selection sidecar (semantic LoRA routing via sentence-transformer embeddings)
 
-> **Note:** This runs real model inference on CPU via vLLM. Responses are
-> slower than GPU (~10-30s per request) but demonstrate the full end-to-end
-> flow including LoRA adapter serving. Works on both ARM64 (M1/M2 Mac) and
-> x86_64.
->
-> - **x86_64**: Uses pre-built `ghcr.io/llm-d/llm-d-cpu:v0.6.0` image (fast setup)
-> - **ARM64**: Builds vLLM CPU from source on first run (~30-60 min, cached after)
+> **Note:** This runs model inference on CPU via vLLM. Responses are slower than GPU (~10-30s per request). Uses the pre-built `ghcr.io/llm-d/llm-d-cpu:v0.6.0` image.
 
 ## System Requirements
 
@@ -24,8 +18,6 @@ This guide deploys llm-d with CPU-based model serving on minikube, featuring:
 | CPU      | 6 cores | 8+ cores    |
 | Disk     | 20 GB   | 30 GB       |
 
-Tested on: macOS M1 Pro (ARM64) and x86_64 Linux.
-
 ## Prerequisites
 
 - [minikube](https://minikube.sigs.k8s.io/docs/start/)
@@ -34,7 +26,6 @@ Tested on: macOS M1 Pro (ARM64) and x86_64 Linux.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [git](https://git-scm.com/)
 - [go](https://go.dev/doc/install) (for building secure-inference)
-- [Docker](https://www.docker.com/products/docker-desktop/) (for building the vLLM CPU image)
 - A [HuggingFace token](https://huggingface.co/settings/tokens) with access to `meta-llama/Llama-3.2-1B-Instruct` (gated model)
 
 ## Setup
@@ -57,7 +48,7 @@ Run the setup:
 
 The script will take approximately 10-15 minutes to complete (longer on first run due to vLLM build) and will:
 
-1. Prepare vLLM CPU image (pre-built on x86, built from source on ARM64)
+1. Pull the pre-built vLLM CPU image
 2. Clone llm-d repository (latest kustomize-based architecture)
 3. Install client tools (kustomize, istioctl, etc.)
 4. Start Minikube cluster (10GB RAM, 6 CPUs)
@@ -192,7 +183,7 @@ This guide uses the new llm-d kustomize-based deployment:
 
 - **Gateway**: Istio with Gateway API Inference Extension (HTTPS)
 - **Scheduler**: llm-d InferencePool via OCI helm chart (load-aware routing)
-- **Model Server**: vLLM CPU (built from source for ARM64/x86) with LoRA adapters from HuggingFace
+- **Model Server**: vLLM CPU with LoRA adapters from HuggingFace
 - **Auth**: secure-inference ext-auth (JWT + OPA ABAC)
 - **LoRA Routing**: Adapter selection sidecar (semantic similarity)
 
@@ -212,7 +203,7 @@ Ensure `HF_TOKEN` is set before running `setup.sh` and that your token has acces
 
 ### Slow inference
 
-This is expected on CPU. The 1B model on CPU will produce ~1-5 tokens/second. This guide demonstrates the access control and routing flow, not production performance.
+Expected on CPU. The 1B model on CPU produces ~1-5 tokens/second. This guide is for the access control and routing flow, not production performance.
 
 ## Cleanup
 
