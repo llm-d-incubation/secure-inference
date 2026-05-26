@@ -1,9 +1,9 @@
-# Helm values for minikube-llm-d-sim guide
+# Helm values for minikube-llm-d-cpu guide
 
 # Gateway configuration
 gateway: istio
-gateway_name: infra-sim-inference-gateway
-target_http_route: llm-d-sim
+gateway_name: llm-d-cpu-inference-gateway
+target_http_route: minikube-llm-d-cpu
 
 # Deployment settings
 image: secure-inference:latest

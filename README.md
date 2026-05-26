@@ -87,6 +87,6 @@ To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
 This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 [Architecture Documentation]:docs/architecture.md
-[Minikube Guide]:guides/minikube-llm-d-sim/readme.md
+[Minikube Guide]:guides/minikube-llm-d-cpu/readme.md
 [ext-auth]:https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter
 [create an issue]:https://github.com/llm-d-incubation/secure-inference/issues/new
