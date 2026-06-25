@@ -49,7 +49,7 @@ func TestEngine_CheckAccess_Denied(t *testing.T) {
 	ctx := context.Background()
 
 	user := &v1alpha1.UserSpec{
-		Id:         "bob",
+		Id:         "charlie",
 		Attributes: map[string]string{"role": "guest"},
 	}
 	model := &v1alpha1.ModelSpec{

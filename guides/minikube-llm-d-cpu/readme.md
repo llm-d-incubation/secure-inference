@@ -84,8 +84,8 @@ export MODEL="meta-llama/Llama-3.2-1B-Instruct"
 # alice (has access to z17 and Power LoRAs)
 export JWT=$(cd ../../ && ./bin/llmd-admin create --name alice)
 
-# bob (has access to FlashSystem LoRA)
-# export JWT=$(cd ../../ && ./bin/llmd-admin create --name bob)
+# charlie (has access to FlashSystem LoRA)
+# export JWT=$(cd ../../ && ./bin/llmd-admin create --name charlie)
 ```
 
 ### Send an authenticated request
@@ -122,8 +122,8 @@ curl -vik --connect-to llm-d.com:443:localhost:8443 https://llm-d.com:443/v1/com
 ```
 
 ```sh
-# Bob asking about FlashSystem — should auto-route to ibm_storage_flash LoRA
-export JWT=$(cd ../../ && ./bin/llmd-admin create --name bob)
+# Charlie asking about FlashSystem — should auto-route to ibm_storage_flash LoRA
+export JWT=$(cd ../../ && ./bin/llmd-admin create --name charlie)
 curl -vik --connect-to llm-d.com:443:localhost:8443 https://llm-d.com:443/v1/completions \
   --header "Authorization: Bearer $JWT" \
   --header "Content-Type: application/json" \
@@ -173,7 +173,7 @@ If a LoRA's timestamp advances into the time window of your request, that LoRA r
 The setup includes two users with role-based access control:
 
 - **Alice** (systems_role): Can access base model, IBM z17 LoRA, and IBM Power LoRA
-- **Bob** (database_expert): Can access base model and IBM FlashSystem LoRA
+- **Charlie** (database_expert): Can access base model and IBM FlashSystem LoRA
 
 ![demo-scenario](../../docs/images/demo-scenario.png)
 

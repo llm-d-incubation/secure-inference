@@ -5,7 +5,7 @@ This directory contains sample User and Model custom resources for testing and d
 ## Files
 
 - **user_alice.yaml** - Sample user with `systems_role` attribute
-- **user_bob.yaml** - Sample user with `database_expert` attribute
+- **user_charlie.yaml** - Sample user with `database_expert` attribute
 - **models.yaml** - Sample base model and LoRA adapters with access policies
 
 ## Usage
@@ -20,7 +20,7 @@ kubectl apply -f config/samples/
 
 ```bash
 kubectl apply -f config/samples/user_alice.yaml
-kubectl apply -f config/samples/user_bob.yaml
+kubectl apply -f config/samples/user_charlie.yaml
 kubectl apply -f config/samples/models.yaml
 ```
 
@@ -33,7 +33,7 @@ kubectl apply -f config/samples/models.yaml
 - Has access to: base model, z17-technical LoRA, power-env LoRA
 - Does NOT have access to: storage-flash LoRA
 
-**Bob** (database_expert):
+**Charlie** (database_expert):
 
 - Has access to: base model, storage-flash LoRA
 - Does NOT have access to: z17-technical LoRA, power-env LoRA
@@ -62,11 +62,11 @@ kubectl apply -f config/samples/models.yaml
 
 After applying these samples, you can test access control by:
 
-1. Generate JWT tokens for alice and bob:
+1. Generate JWT tokens for alice and charlie:
 
    ```bash
    ./bin/amd64/llmd-auth create --name alice
-   ./bin/amd64/llmd-auth create --name bob
+   ./bin/amd64/llmd-auth create --name charlie
    ```
 
 2. Test API calls with the generated tokens:
@@ -78,8 +78,8 @@ After applying these samples, you can test access control by:
         -d '{"model":"meta-llama/Llama-3.2-1B-Instruct","prompt":"Tell me about z17"}' \
         https://<gateway>/v1/completions
 
-   # Bob can access storage LoRA
-   curl -H "Authorization: Bearer <bob-token>" \
+   # Charlie can access storage LoRA
+   curl -H "Authorization: Bearer <charlie-token>" \
         -H "ext-proc-enable: allow" \
         -d '{"model":"meta-llama/Llama-3.2-1B-Instruct","prompt":"Tell me about flash storage"}' \
         https://<gateway>/v1/completions
@@ -92,7 +92,7 @@ After applying these samples, you can test access control by:
    curl -H "Authorization: Bearer <alice-token>" \
         https://<gateway>/v1/models
 
-   # Bob's view
-   curl -H "Authorization: Bearer <bob-token>" \
+   # Charlie's view
+   curl -H "Authorization: Bearer <charlie-token>" \
         https://<gateway>/v1/models
    ```

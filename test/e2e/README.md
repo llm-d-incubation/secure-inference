@@ -77,7 +77,7 @@ kubectl apply -f config/samples/
 ```bash
 ./bin/llmd-auth init
 export ALICE_TOKEN=$(./bin/llmd-auth create --name alice)
-export BOB_TOKEN=$(./bin/llmd-auth create --name bob)
+export CHARLIE_TOKEN=$(./bin/llmd-auth create --name charlie)
 ```
 
 ### 4. Test Authentication
@@ -101,8 +101,8 @@ curl -H "Authorization: Bearer $ALICE_TOKEN" \
      -d '{"model":"ibm_z17_technical_technical_introduction","prompt":"test"}' \
      https://gateway/v1/completions
 
-# Bob cannot access z17 LoRA (should get 403)
-curl -H "Authorization: Bearer $BOB_TOKEN" \
+# Charlie cannot access z17 LoRA (should get 403)
+curl -H "Authorization: Bearer $CHARLIE_TOKEN" \
      -H "Content-Type: application/json" \
      -d '{"model":"ibm_z17_technical_technical_introduction","prompt":"test"}' \
      https://gateway/v1/completions

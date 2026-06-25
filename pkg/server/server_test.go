@@ -348,7 +348,7 @@ func TestCheck_CompletionsEndpoint_AccessDenied(t *testing.T) {
 	ts := newTestSetup(t)
 
 	ts.seedUser(t, &v1alpha1.UserSpec{
-		Id:         "bob",
+		Id:         "charlie",
 		Attributes: map[string]string{"role": "guest"},
 	})
 	ts.seedModel(t, &v1alpha1.ModelSpec{
@@ -362,7 +362,7 @@ func TestCheck_CompletionsEndpoint_AccessDenied(t *testing.T) {
 	})
 
 	srv := ts.server(&jwtAuthenticator{publicKey: kp.publicKey})
-	token := signToken(t, kp, newTestClaims("bob", "guest", "acme"))
+	token := signToken(t, kp, newTestClaims("charlie", "guest", "acme"))
 
 	req := makeCheckRequest("/v1/completions", "Bearer "+token, `{"model":"restricted-model"}`)
 	resp, err := srv.Check(context.Background(), req)
