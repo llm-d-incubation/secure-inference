@@ -332,7 +332,7 @@ func TestE2E_AccessControl_Denied(t *testing.T) {
 	ts := newTestServer(t, nil, false)
 	defer ts.close(t)
 
-	ts.seedUser(t, "bob", map[string]string{"role": "guest"})
+	ts.seedUser(t, "charlie", map[string]string{"role": "guest"})
 	ts.seedModel(t, &v1alpha1.ModelSpec{
 		Id:   "restricted-model",
 		Type: v1alpha1.ModelTypeBase,
@@ -340,7 +340,7 @@ func TestE2E_AccessControl_Denied(t *testing.T) {
 			UserAttributes: map[string][]string{"role": {"systems_role"}},
 		},
 	})
-	token := ts.signToken(t, "bob", "guest")
+	token := ts.signToken(t, "charlie", "guest")
 
 	resp := ts.check(t, makeCheckRequest("/v1/completions", "Bearer "+token, `{"model":"restricted-model","prompt":"hello"}`))
 	if got := responseCode(resp); got != int32(codes.PermissionDenied) {

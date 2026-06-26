@@ -10,9 +10,9 @@ spec:
 apiVersion: accesscontrol.llm-d.io/v1alpha1
 kind: User
 metadata:
-  name: bob
+  name: charlie
 spec:
-  id: bob
+  id: charlie
   attributes:
     role: database_expert
 ---

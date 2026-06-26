@@ -92,9 +92,9 @@ func TestGenerateJWT_DifferentUsers(t *testing.T) {
 		t.Fatalf("GenerateJWT failed for alice: %v", err)
 	}
 
-	token2, err := GenerateJWT("bob", "user", "org2", keyPath)
+	token2, err := GenerateJWT("charlie", "user", "org2", keyPath)
 	if err != nil {
-		t.Fatalf("GenerateJWT failed for bob: %v", err)
+		t.Fatalf("GenerateJWT failed for charlie: %v", err)
 	}
 
 	if token1 == token2 {
