@@ -3,11 +3,11 @@
 [![CI](https://github.com/llm-d-incubation/secure-inference/actions/workflows/ci-pr-checks.yaml/badge.svg)](https://github.com/llm-d-incubation/secure-inference/actions/workflows/ci-pr-checks.yaml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-secure-inference is a gateway level access control system for [LLM-D](https://github.com/llm-d). It provides JWT-based authentication and attribute-based access control (ABAC) for LLM inference requests, operating independently of LLM-D internals.
+secure-inference is a gateway level access control system for [llm-d](https://github.com/llm-d). It provides JWT-based authentication and attribute-based access control (ABAC) for LLM inference requests, operating independently of llm-d internals. [Learn More](https://developer.ibm.com/blogs/secure-inference/)
 
 ## About
 
-This provides an Envoy [ext-auth] compatible gRPC server that sits in front of LLM-D inference pools. It validates JWT tokens, looks up users and models from Kubernetes CRDs, and evaluates access policies using OPA — all in a single binary.
+This provides an Envoy [ext-auth] compatible gRPC server that sits in front of LLM-D inference pools. It validates JWT tokens, looks up users and models from Kubernetes CRDs, and evaluates access policies using Open Policy Agent (OPA) — all in a single binary.
 
 For details on the internal structure, component patterns, and dependency layers, see the [Architecture Documentation].
 
@@ -64,7 +64,13 @@ make deploy         # Deploy all components to cluster
 
 ## Getting Started
 
-For local development and deployment, see the [Minikube Guide].
+For local development and deployment, see the tutorial on [deploying a multi-tenant AI inference stack with LoRA adapters and attribute-based access control - no GPU required](https://developer.ibm.com/tutorials/secure-inference/)
+
+### Useful Links
+- [Architecture Documentation](docs/architecture.md)
+- [ext-auth](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter)
+- [Create an issue](https://github.com/llm-d-incubation/secure-inference/issues/new)
+
 
 ## Development
 
@@ -86,7 +92,3 @@ To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
 
 This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
-[Architecture Documentation]:docs/architecture.md
-[Minikube Guide]:guides/minikube-llm-d-cpu/readme.md
-[ext-auth]:https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_authz_filter
-[create an issue]:https://github.com/llm-d-incubation/secure-inference/issues/new
