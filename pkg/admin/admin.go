@@ -8,11 +8,10 @@ import (
 )
 
 // CreateAdminCerts creates the admin CA certificate and private key.
-func CreateAdminCerts() {
+func CreateAdminCerts() error {
 	fmt.Printf("Creating LLM-D Admin CA Cert.\n")
 	if err := os.MkdirAll(config.BaseDirectory(), 0o755); err != nil {
-		fmt.Printf("Unable to create directory :%v\n", err)
-		return
+		return fmt.Errorf("unable to create directory: %w", err)
 	}
 	err := CreateCertificate(&CertificateConfig{
 		Name:              config.ServerName,
@@ -21,9 +20,9 @@ func CreateAdminCerts() {
 		PrivateKeyOutPath: config.LlmDKeyFile,
 	})
 	if err != nil {
-		fmt.Printf("Unable to generate CA certificate :%v\n", err)
-		return
+		return fmt.Errorf("unable to generate CA certificate: %w", err)
 	}
+	return nil
 }
 
 // GenerateTLSCert creates a TLS certificate signed by the existing CA.

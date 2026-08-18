@@ -22,7 +22,10 @@ var initCmd = &cobra.Command{
 	Short: "Initialize llmd-admin",
 	Long:  `Initialize llmd-admin for access control. Creates the necessary key-pair for LLM-D to authorize users`,
 	Run: func(cmd *cobra.Command, args []string) {
-		admin.CreateAdminCerts()
+		if err := admin.CreateAdminCerts(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error creating admin certs: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
